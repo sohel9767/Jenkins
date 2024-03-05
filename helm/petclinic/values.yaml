@@ -5,8 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: iamsakib/petclinic
-  tag: ${BUILD_NUMBER}
+  repository: sohelp/petclinic
+  tag: latest
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
