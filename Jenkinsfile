@@ -1,38 +1,46 @@
 pipeline {
     agent any
     stages {
-        stage {'build maven'} {
+        stage('Build Maven') {
             steps {
                 sh 'pwd'
                 sh 'mvn clean install package'
             }
         }
-        stage {'Copy Artifact'} {
+        stage ('Copy Artifacts') {
             steps {
                 sh 'pwd'
                 sh 'cp -r target/*.jar docker'
             }
         }
-        stage {'Build Docker Image'} {
+        stage('Unit Tests') {
             steps {
+                sh 'mvn test'
+            }
+        }
+        stage('Build Docker Image'){
+            steps{
                 script {
-                    def customImage = docker.build("sohelp/petclinic:${env.BUILD_NUMBER}", "./docker")
+                    def customImage = docker.build("iamsakib/petclinic:${env.BUILD_NUMBER}", "./docker")
                     docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-                    customImage.push('latest') 
-                    }
+                    customImage.push()    
                 }
             }
         }
-        stage {'Build on kubernetes'} {
+    }
+
+        stage('Build on kubernetes'){
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig']) {
-                    sh 'pwd'
-                    sh 'cp -R helm/* .'
-                    sh 'ls -lrth'
-                    sh 'pwd'
-                    sh '/usr/local/bin/helm upgrade --install petclinic-app petclinic --set image.repo=sohelp/petclinic --set image.tag=latest'
-                }
-            }
+                 sh 'pwd'
+                 sh 'cp -R helm/* .'
+                 sh 'ls -ltrh'
+                 sh 'pwd'
+                 sh '/usr/local/bin/helm upgrade --install petclinic-app petclinic --set image.repository=sohelp/petclinic --set image.tag=${BUILD_NUMBER}'
         }
-    } 
+    }
+}
+
+}
+
 }
